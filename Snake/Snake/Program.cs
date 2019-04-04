@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 using System.Threading;
 namespace Snake
 {
-    enum Condition {Normal, Over, GotNode}
+    enum Condition { Normal, Over, Clear, GotNode }
     class Program
     {
         static Program instance;
-        event EventHandler GetNode;
         Queue<int> px = new Queue<int> { };
         Queue<int> py = new Queue<int> { };
 
@@ -47,13 +46,12 @@ namespace Snake
 
             while (true)
             {
-
                 GetKey(ref fx, ref fy);
                 px.Enqueue(px.Last() + fx);
                 py.Enqueue(py.Last() + fy);
                 field[py.Dequeue(), px.Dequeue()] = ' ';
-                //CheckGameOverCondition
-                switch(CheckCondition(px.Last(), py.Last()))
+                //Check game over condition
+                switch (CheckCondition(px.Last(), py.Last()))
                 {
                     case Condition.Normal:
                         break;
@@ -61,6 +59,7 @@ namespace Snake
                         Console.WriteLine("Got Node!");
                         Thread.Sleep(500);
                         break;
+                    case Condition.Clear:
                     case Condition.Over:
                         return;
                 }
@@ -74,20 +73,27 @@ namespace Snake
         }
         Condition CheckCondition(int x, int y)
         {
-
-            if (px.Last() == 19 || px.Last() == 0 || py.Last() == 0 || py.Last() == 19)
+            if (px.Count == 324)
             {
-                Terminate();
+                Terminate(Condition.Clear);
+                return Condition.Clear;
+            }
+            else if (px.Last() == 19 || px.Last() == 0 || py.Last() == 0 || py.Last() == 19)
+            {
+                Terminate(Condition.Over);
                 return Condition.Over;
             }
-            switch (field[y, x])
+            else
             {
-                case '@':
-                    MakeNewNode();
-                    return Condition.GotNode;
-                case '#':
-                    Terminate();
-                    return Condition.Over;
+                switch (field[y, x])
+                {
+                    case '@':
+                        MakeNewNode();
+                        return Condition.GotNode;
+                    case '#':
+                        Terminate(Condition.Over);
+                        return Condition.Over;
+                }
             }
             return Condition.Normal;
         }
@@ -100,17 +106,17 @@ namespace Snake
                 {
 
                     Console.Write(field[i, j]);
-
                 }
                 Console.WriteLine();
-                if (i == 9)
+                if (i == 8)
                 {
                     for (int k = 0; k < str.Length; k++)
                     {
                         int padSize = (18 - str[k].Length) / 2;
-                        str[k]= str[k].PadLeft(18 - padSize);
-                        str[k]= str[k].PadRight(18);
+                        str[k] = str[k].PadLeft(18 - padSize);
+                        str[k] = str[k].PadRight(18);
                         Console.WriteLine("#" + str[k] + "#");
+                        i++;
                     }
                 }
             }
@@ -129,12 +135,21 @@ namespace Snake
                 Console.WriteLine();
             }
         }
-        void Terminate()
+        void Terminate(Condition isClear)
         {
-            Console.Clear();
-            DisplayWindow("Game Over","Press Any Key");
-            Console.ReadKey();
-            return;
+            if (isClear == Condition.Clear)
+            {
+                Console.Clear();
+                DisplayWindow("Congratulation!","***YOU WON***",  "Press Any Key");
+                Console.ReadKey();
+            }
+            else if (isClear == Condition.Over)
+            {
+                Console.Clear();
+                DisplayWindow("Game Over", "Press Any Key");
+                Console.ReadKey();
+                return;
+            }
         }
         void GetKey(ref int x, ref int y)
         {
@@ -187,10 +202,18 @@ namespace Snake
         {
             px.Enqueue(px.Last());
             py.Enqueue(py.Last());
-            Random random = new Random();
-            randomX = random.Next(1, 18);
-            randomY = random.Next(1, 18);
+            do
+            {
+                Random random = new Random();
+                randomX = random.Next(1, 18);
+                randomY = random.Next(1, 18);
+            }
+            while (field[randomX, randomY] == '#');
             field[randomX, randomY] = '@';
         }
+    }
+    class Functions
+    {
+
     }
 }
